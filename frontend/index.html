@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatbot CGV</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">Dashboard</div>
+      <div class="menu-item" onclick="showDashboard()">
+        📊 Power BI
+      </div>
+      <div class="menu-item" onclick="showChatbot()">
+        💬 Chatbot
+      </div>
+      <button class="new-chat">
+        ✎ Cuộc trò chuyện mới
+      </button>
+      <div class="menu-item">
+        🔍 Tìm kiếm trong các cuộc trò chuyện
+      </div>
+      <div class="section-title">
+        Gần đây
+      </div>
+    </aside>
+    <main class="main">
+
+      <section class="chat-area">
+        <h1 id="welcomeText">
+          Xin chào, bạn hôm nay bạn cần gì ?
+        </h1>
+        <div class="messages-wrapper">
+          <div class="messages" id="chatBox"></div>
+        </div>
+
+        <div class="input-box">
+          <button class="plus">+</button>
+          <textarea
+            id="userInput"
+            placeholder="Hỏi chatbot CGV"
+            rows="1"
+            oninput="autoResizeInput()"
+            onkeydown="handleEnter(event)"
+          ></textarea>
+          <button
+            class="send-btn"
+            onclick="sendMessage()"
+          >
+            ➤
+          </button>
+        </div>
+      </section>
+
+      <section
+        class="dashboard-area"
+        id="dashboardArea"
+      >
+        <iframe
+          class="powerbi-frame"
+          src="https://app.powerbi.com/reportEmbed?reportId=bd106fa0-3c68-4066-8a17-7810b88777cb&autoAuth=true&ctid=e7572e92-7aee-4713-a3c4-ba64888ad45f"
+          frameborder="0"
+          allowFullScreen="true"
+        >
+        </iframe>
+      </section>
+
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
