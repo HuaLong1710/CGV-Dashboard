@@ -54,6 +54,12 @@ body {
   background: #1f1f1f;
 }
 
+.menu-item.active {
+  background: #111111;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
 .menu-item {
   padding: 14px 10px;
   color: #f1f1f1;
@@ -64,7 +70,7 @@ body {
 
 .menu-item:hover {
   background: #252525;
-  border-radius: 12px;
+  border-radius: 20px;
 }
 
 .section-title {
@@ -79,28 +85,6 @@ body {
   flex: 1;
   background: #0f1014;
   position: relative;
-}
-
-.topbar,
-.upgrade,
-.icon {
-  display: none;
-}
-
-/* Dashboard */
-.dashboard-area {
-  display: none;
-  width: 100%;
-  height: 100vh;
-  padding: 24px;
-}
-
-.powerbi-frame {
-  width: 100%;
-  height: 100%;
-  border: none;
-  border-radius: 16px;
-  background: #1f1f1f;
 }
 
 /* Chat Area */
@@ -248,25 +232,61 @@ h1 {
   color: #b8b8b8;
 }
 
-.input-box input::placeholder {
-  color: #b8b8b8;
-}
-
-.model-dot {
-  width: 9px;
-  height: 9px;
-  background: #3b82f6;
-  border-radius: 50%;
-}
-
-.model-name {
-  color: #ddd;
-}
-
 .send-btn {
   background: none;
   border: none;
   color: white;
   font-size: 22px;
   cursor: pointer;
+}
+
+.recent-item {
+  position: relative;
+  overflow: visible;
+}
+
+.recent-actions {
+  position: relative;
+}
+
+.more-btn {
+  background: none;
+  border: none;
+  color: #cfcfcf;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0;
+  padding: 4px 8px;
+}
+
+.recent-item:hover .more-btn {
+  opacity: 1;
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 30px;
+  display: none;
+  min-width: 120px;
+  background: #252525;
+  border-radius: 10px;
+  z-index: 9999;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-menu div {
+  padding: 10px 14px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dropdown-menu div:hover {
+  background: #333;
 }

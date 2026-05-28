@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Power BI</title>
+  <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo" onclick="location.href='index.html'">
+        Dashboard
+      </div>
+
+      <div class="menu-item active" onclick="location.href='dashboard.html'">
+        📊 Power BI
+      </div>
+
+      <div class="menu-item" onclick="location.href='chatbot.html'">
+        💬 Chatbot
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="dashboard-area" style="display: block;">
+        <iframe
+          class="powerbi-frame"
+          src="https://app.powerbi.com/reportEmbed?reportId=bd106fa0-3c68-4066-8a17-7810b88777cb&autoAuth=true&ctid=e7572e92-7aee-4713-a3c4-ba64888ad45f"
+          frameborder="0"
+          allowFullScreen="true">
+        </iframe>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
