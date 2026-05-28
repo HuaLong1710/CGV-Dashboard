@@ -3,37 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Chatbot CGV</title>
+
   <link rel="stylesheet" href="../css/chatbot.css" />
+
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 
 <body>
   <div class="app">
     <aside class="sidebar">
-      <div class="logo" onclick="location.href='index.html'">
-        Dashboard
+      <div class="sidebar-header">
+        <div class="logo" onclick="location.href='index.html'">
+          Dashboard
+        </div>
+        <button class="toggle-sidebar" onclick="toggleSidebar()">
+          ☰
+        </button>
       </div>
 
-      <div class="menu-item" onclick="location.href='dashboard.html'">
-        📊 Power BI
+      <div class="menu-item" data-title="Power BI" onclick="location.href='dashboard.html'">
+        <span class="menu-icon">◫</span>
+        <span class="menu-text">Power BI</span>
       </div>
 
-      <div class="menu-item active" onclick="location.href='chatbot.html'">
-        💬 Chatbot
+      <div class="menu-item active" data-title="Chatbot" onclick="location.href='chatbot.html'">
+        <span class="menu-icon">🗲</span>
+        <span class="menu-text">Chatbot</span>
       </div>
 
-      <button class="new-chat" onclick="newChat()">
-        ✎ Cuộc trò chuyện mới
+      <button class="new-chat" data-title="Cuộc trò chuyện mới" onclick="newChat()">
+        <span class="menu-icon">✎</span>
+        <span class="menu-text">Cuộc trò chuyện mới</span>
       </button>
 
-      <div class="menu-item">
-        🔍 Tìm kiếm trong các cuộc trò chuyện
+      <div class="menu-item" data-title="Tìm kiếm">
+        <span class="menu-icon">✦</span>
+        <span class="menu-text">Tìm kiếm trong các cuộc trò chuyện</span>
       </div>
 
       <div class="section-title">
         Gần đây
       </div>
+
       <div class="recent-list" id="recentList"></div>
     </aside>
 
@@ -66,6 +79,45 @@
     </main>
   </div>
 
+  <div class="rename-modal" id="renameModal">
+    <div class="rename-box">
+      <h2>Đổi tên cho cuộc trò chuyện này</h2>
+
+      <input
+        type="text"
+        id="renameInput"
+        placeholder="Nhập tên mới"
+      />
+
+      <div class="rename-actions">
+        <button onclick="closeRenameModal()">
+          Hủy
+        </button>
+
+        <button onclick="confirmRename()">
+          Đổi tên
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="delete-modal" id="deleteModal">
+    <div class="delete-box">
+      <h2>Bạn muốn xoá cuộc trò chuyện?</h2>
+
+      <p>
+        Thao tác này sẽ xoá cuộc trò chuyện này khỏi danh sách Gần đây.
+        Nội dung đã xoá sẽ không thể khôi phục.
+      </p>
+
+      <div class="delete-actions">
+        <button onclick="closeDeleteModal()">Hủy</button>
+        <button onclick="confirmDelete()">Xoá</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../js/script.js"></script>
+  <script src="../js/sidebar.js"></script>
 </body>
 </html>

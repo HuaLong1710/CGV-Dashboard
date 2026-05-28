@@ -54,24 +54,19 @@ function renderRecentList() {
   const conversations = JSON.parse(localStorage.getItem("cgv_conversations")) || [];
 
   recentList.innerHTML = conversations.map(item => `
-    <div class="recent-item">
-      <div class="recent-title" onclick="loadConversation(${item.id})">
-        💬 ${item.title}
+    <div class="recent-item" data-title="${item.title}">
+      <div class="recent-title" title="${item.title}" onclick="loadConversation(${item.id})">
+        <span class="recent-text">${item.title}</span>
       </div>
 
       <div class="recent-actions">
         <button class="more-btn" onclick="toggleMenu(event, ${item.id})">
-          ⋯
+          ⋮
         </button>
 
         <div class="dropdown-menu" id="menu-${item.id}">
-          <div onclick="renameConversation(event, ${item.id})">
-            Đổi tên
-          </div>
-
-          <div onclick="deleteConversation(event, ${item.id})">
-            Xóa
-          </div>
+          <div onclick="openRenameModal(event, ${item.id})">Đổi tên</div>
+          <div onclick="deleteConversation(event, ${item.id})">Xóa</div>
         </div>
       </div>
     </div>
@@ -126,38 +121,33 @@ function closeAllDropdowns() {
   });
 }
 
+let deleteTargetId = null;
+
 function deleteConversation(event, id) {
   event.stopPropagation();
+  deleteTargetId = id;
+  document.getElementById("deleteModal").style.display = "flex";
+  closeAllDropdowns();
+}
+
+function closeDeleteModal() {
+  deleteTargetId = null;
+  document.getElementById("deleteModal").style.display = "none";
+}
+
+function confirmDelete() {
+  if (!deleteTargetId) return;
 
   let conversations = JSON.parse(localStorage.getItem("cgv_conversations")) || [];
-
-  conversations = conversations.filter(item => item.id !== id);
+  conversations = conversations.filter(item => item.id !== deleteTargetId);
 
   localStorage.setItem("cgv_conversations", JSON.stringify(conversations));
 
-  if (currentMessages.id === id) {
+  if (currentMessages.id === deleteTargetId) {
     newChat();
   }
 
-  renderRecentList();
-}
-
-function renameConversation(event, id) {
-  event.stopPropagation();
-
-  const newName = prompt("Nhập tên mới:");
-
-  if (!newName) return;
-
-  const conversations = JSON.parse(localStorage.getItem("cgv_conversations")) || [];
-  const target = conversations.find(item => item.id === id);
-
-  if (target) {
-    target.title = newName.trim();
-  }
-
-  localStorage.setItem("cgv_conversations", JSON.stringify(conversations));
-
+  closeDeleteModal();
   renderRecentList();
 }
 
@@ -238,4 +228,45 @@ async function sendMessage() {
 
     chatBox.scrollTop = chatBox.scrollHeight;
   }
+}
+
+let renameTargetId = null;
+
+function openRenameModal(event, id) {
+  event.stopPropagation();
+
+  const conversations = JSON.parse(localStorage.getItem("cgv_conversations")) || [];
+  const target = conversations.find(item => item.id === id);
+
+  if (!target) return;
+
+  renameTargetId = id;
+
+  document.getElementById("renameInput").value = target.title;
+  document.getElementById("renameModal").style.display = "flex";
+
+  closeAllDropdowns();
+}
+
+function closeRenameModal() {
+  renameTargetId = null;
+  document.getElementById("renameModal").style.display = "none";
+}
+
+function confirmRename() {
+  const newName = document.getElementById("renameInput").value.trim();
+
+  if (!newName || !renameTargetId) return;
+
+  const conversations = JSON.parse(localStorage.getItem("cgv_conversations")) || [];
+  const target = conversations.find(item => item.id === renameTargetId);
+
+  if (target) {
+    target.title = newName;
+  }
+
+  localStorage.setItem("cgv_conversations", JSON.stringify(conversations));
+
+  closeRenameModal();
+  renderRecentList();
 }

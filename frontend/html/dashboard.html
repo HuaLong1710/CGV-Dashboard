@@ -10,16 +10,23 @@
 <body>
   <div class="app">
     <aside class="sidebar">
-      <div class="logo" onclick="location.href='index.html'">
-        Dashboard
+      <div class="sidebar-header">
+        <div class="logo" onclick="location.href='index.html'">
+          Dashboard
+        </div>
+        <button class="toggle-sidebar" onclick="toggleSidebar()">
+          ☰
+        </button>
       </div>
 
-      <div class="menu-item active" onclick="location.href='dashboard.html'">
-        📊 Power BI
+      <div class="menu-item" data-title="Power BI" onclick="location.href='dashboard.html'">
+        <span class="menu-icon">◫</span>
+        <span class="menu-text">Power BI</span>
       </div>
 
-      <div class="menu-item" onclick="location.href='chatbot.html'">
-        💬 Chatbot
+      <div class="menu-item active" data-title="Chatbot" onclick="location.href='chatbot.html'">
+        <span class="menu-icon">🗲</span>
+        <span class="menu-text">Chatbot</span>
       </div>
     </aside>
 
@@ -34,5 +41,7 @@
       </section>
     </main>
   </div>
+
+  <script src="../js/sidebar.js"></script>
 </body>
 </html>

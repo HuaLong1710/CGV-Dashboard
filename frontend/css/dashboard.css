@@ -77,3 +77,116 @@ body {
   border-radius: 16px;
   background: #1f1f1f;
 }
+
+/* Sidebar header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding: 0 8px;
+}
+
+.logo {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+/* Toggle button */
+.toggle-sidebar {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  background: #1f1f1f;
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Sidebar */
+.sidebar {
+  transition: 0.3s;
+  overflow: hidden;
+}
+
+/* Collapse sidebar */
+.sidebar.collapsed {
+  width: 78px;
+}
+
+/* Header khi collapse */
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
+}
+
+/* Ẩn text */
+.sidebar.collapsed .logo,
+.sidebar.collapsed .section-title,
+.sidebar.collapsed .menu-text,
+.sidebar.collapsed .recent-text,
+.sidebar.collapsed .recent-actions {
+  display: none;
+}
+
+/* Menu item */
+.menu-item,
+.new-chat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Icon */
+.menu-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: #ffffff;
+  opacity: 0.9;
+  min-width: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Collapse menu */
+.sidebar.collapsed .menu-item,
+.sidebar.collapsed .new-chat {
+  justify-content: center;
+  padding: 16px 0;
+  width: 100%;
+  gap: 0;
+}
+
+/* Icon khi collapse */
+.sidebar.collapsed .menu-icon {
+  margin: 0;
+  font-size: 22px;
+}
+
+/* Recent item */
+.sidebar.collapsed .recent-item {
+  justify-content: center;
+}
+
+/* Tooltip */
+.sidebar.collapsed .menu-item:hover::after,
+.sidebar.collapsed .new-chat:hover::after {
+  content: attr(data-title);
+  position: absolute;
+  left: 75px;
+  background: #2b2b2b;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 10px;
+  white-space: nowrap;
+  font-size: 14px;
+  z-index: 99999;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  transition: 0.3s;
+}

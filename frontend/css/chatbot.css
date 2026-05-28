@@ -290,3 +290,282 @@ h1 {
 .dropdown-menu div:hover {
   background: #333;
 }
+
+.recent-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  overflow: visible;
+}
+
+.recent-title {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.more-btn {
+  background: none;
+  border: none;
+  color: #cfcfcf;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0;
+  padding: 2px 6px;
+}
+
+.recent-item:hover .more-btn {
+  opacity: 1;
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 34px;
+  display: none;
+  min-width: 120px;
+  background: #252525;
+  border-radius: 10px;
+  z-index: 9999;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-menu div {
+  padding: 10px 14px;
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.dropdown-menu div:hover {
+  background: #333;
+}
+
+.rename-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 99999;
+}
+
+.rename-box {
+  width: 520px;
+  background: #222222;
+  border-radius: 26px;
+  padding: 28px 30px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+}
+
+.rename-box h2 {
+  margin: 0 0 24px;
+  font-size: 22px;
+}
+
+.rename-box input {
+  width: 100%;
+  background: transparent;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  padding: 14px 16px;
+  color: white;
+  font-size: 17px;
+  outline: none;
+}
+
+.rename-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.rename-actions button {
+  border: none;
+  padding: 10px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  background: #333;
+  color: white;
+}
+
+.rename-actions button:last-child {
+  background: #444;
+}
+
+.delete-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 99999;
+}
+
+.delete-box {
+  width: 600px;
+  background: #222222;
+  border-radius: 28px;
+  padding: 30px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+
+.delete-box h2 {
+  margin: 0 0 22px;
+  font-size: 24px;
+}
+
+.delete-box p {
+  color: #d1d5db;
+  line-height: 1.5;
+  font-size: 17px;
+}
+
+.delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.delete-actions button {
+  border: none;
+  padding: 11px 18px;
+  border-radius: 22px;
+  cursor: pointer;
+  background: #111;
+  color: white;
+  font-size: 15px;
+}
+
+.delete-actions button:last-child {
+  background: #333;
+}
+
+/* Sidebar header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding: 0 8px;
+}
+
+.logo {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+/* Toggle button */
+.toggle-sidebar {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  background: #1f1f1f;
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Sidebar */
+.sidebar {
+  transition: 0.3s;
+  overflow: hidden;
+}
+
+/* Collapse sidebar */
+.sidebar.collapsed {
+  width: 78px;
+}
+
+/* Header khi collapse */
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
+}
+
+/* Ẩn text */
+.sidebar.collapsed .logo,
+.sidebar.collapsed .section-title,
+.sidebar.collapsed .menu-text,
+.sidebar.collapsed .recent-text,
+.sidebar.collapsed .recent-actions {
+  display: none;
+}
+
+/* Menu item */
+.menu-item,
+.new-chat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Icon */
+.menu-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: #ffffff;
+  opacity: 0.9;
+  min-width: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Collapse menu */
+.sidebar.collapsed .menu-item,
+.sidebar.collapsed .new-chat {
+  justify-content: center;
+  padding: 16px 0;
+  width: 100%;
+  gap: 0;
+}
+
+/* Icon khi collapse */
+.sidebar.collapsed .menu-icon {
+  margin: 0;
+  font-size: 22px;
+}
+
+/* Recent item */
+.sidebar.collapsed .recent-item {
+  justify-content: center;
+}
+
+/* Tooltip */
+.sidebar.collapsed .menu-item:hover::after,
+.sidebar.collapsed .new-chat:hover::after {
+  content: attr(data-title);
+  position: absolute;
+  left: 75px;
+  background: #2b2b2b;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 10px;
+  white-space: nowrap;
+  font-size: 14px;
+  z-index: 99999;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  transition: 0.3s;
+}
