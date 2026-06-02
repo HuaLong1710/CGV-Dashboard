@@ -182,6 +182,46 @@ async function getTopByColumn(columnName, limit = 10) {
     .map(([name, count]) => ({ name, count }));
 }
 
+async function getTopRevenueByColumn(columnName, limit = 10) {
+  const pageSize = 10000;
+  let from = 0;
+  let to = pageSize - 1;
+  let hasMore = true;
+
+  const revenueMap = {};
+
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from(TABLE_NAME)
+      .select(`"${columnName}", "${COLS.vnPayPrice}"`)
+      .range(from, to);
+
+    if (error) throw new Error(error.message);
+
+    data.forEach((row) => {
+      const key = row[columnName] || "Không rõ";
+      const revenue = Number(row[COLS.vnPayPrice] || 0);
+
+      revenueMap[key] = (revenueMap[key] || 0) + revenue;
+    });
+
+    if (!data || data.length < pageSize) {
+      hasMore = false;
+    } else {
+      from += pageSize;
+      to += pageSize;
+    }
+  }
+
+  return Object.entries(revenueMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([name, revenue]) => ({
+      name,
+      revenue,
+    }));
+}
+
 /* Tính doanh thu cơ bản theo từng trang */
 async function getRevenueSummary() {
   const pageSize = 10000;
@@ -252,23 +292,40 @@ app.get("/api/summary", async (req, res) => {
 function detectIntent(message) {
   const text = message.toLowerCase();
 
-  if (text.includes("tổng doanh thu") || text.includes("doanh thu")) {
-    return "revenue";
+  if (text.includes("bao nhiêu dòng") || text.includes("số dòng")) {
+    return "total_rows";
   }
 
-  if (text.includes("phim") && (text.includes("nhiều nhất") || text.includes("top"))) {
+  if (text.includes("giá trung bình") || text.includes("giá vé trung bình")) {
+    return "average_price";
+  }
+
+  if (text.includes("loại vé") && (text.includes("phổ biến") || text.includes("nhiều nhất"))) {
+    return "top_ticket_types";
+  }
+
+  if (text.includes("doanh thu") && text.includes("phim")) {
+    return "revenue_by_movie";
+  }
+
+  if (text.includes("doanh thu") && (text.includes("tỉnh") || text.includes("thành phố"))) {
+    return "revenue_by_province";
+  }
+
+  if ((text.includes("phim") && (text.includes("top") || text.includes("nhiều nhất") || text.includes("phổ biến")))) {
     return "top_movies";
   }
 
-  if (
-    (text.includes("tỉnh") || text.includes("thành phố")) &&
-    (text.includes("nhiều nhất") || text.includes("top"))
-  ) {
+  if ((text.includes("tỉnh") || text.includes("thành phố")) && (text.includes("top") || text.includes("phổ biến") || text.includes("nhiều nhất"))) {
     return "top_provinces";
   }
 
-  if (text.includes("rạp") && (text.includes("nhiều nhất") || text.includes("top"))) {
+  if (text.includes("rạp") && (text.includes("top") || text.includes("nhiều nhất"))) {
     return "top_cinemas";
+  }
+
+  if (text.includes("doanh thu")) {
+    return "revenue";
   }
 
   return "general";
@@ -319,7 +376,67 @@ app.post("/chat", async (req, res) => {
 
     let dataForAI = "";
 
-    if (intent === "revenue") {
+    if (intent === "total_rows") {
+      const totalRows = await getTotalRows();
+
+      dataForAI = `
+Tổng số dòng dữ liệu ước tính: ${totalRows.toLocaleString("vi-VN")}
+`;
+    }
+
+    else if (intent === "average_price") {
+      const revenue = await getRevenueSummary();
+
+      dataForAI = `
+Tổng số vé/giao dịch: ${revenue.totalTickets.toLocaleString("vi-VN")}
+Giá bán VNPAY trung bình: ${formatVND(revenue.averagePrice)}
+Tổng doanh thu theo giá bán VNPAY: ${formatVND(revenue.totalRevenue)}
+`;
+    }
+
+    else if (intent === "top_ticket_types") {
+      const ticketTypes = await getTopByColumn(COLS.ticketType, 10);
+
+      dataForAI = `
+Top loại vé phổ biến:
+${ticketTypes
+  .map(
+    (item, index) =>
+      `${index + 1}. ${item.name}: ${item.count.toLocaleString("vi-VN")} giao dịch`
+  )
+  .join("\n")}
+`;
+    }
+
+    else if (intent === "revenue_by_movie") {
+      const topRevenueMovies = await getTopRevenueByColumn(COLS.movie, 10);
+
+      dataForAI = `
+Top phim theo doanh thu VNPAY:
+${topRevenueMovies
+  .map(
+    (item, index) =>
+      `${index + 1}. ${item.name}: ${formatVND(item.revenue)}`
+  )
+  .join("\n")}
+`;
+    }
+
+    else if (intent === "revenue_by_province") {
+      const topRevenueProvinces = await getTopRevenueByColumn(COLS.province, 10);
+
+      dataForAI = `
+Top tỉnh/thành theo doanh thu VNPAY:
+${topRevenueProvinces
+  .map(
+    (item, index) =>
+      `${index + 1}. ${item.name}: ${formatVND(item.revenue)}`
+  )
+  .join("\n")}
+`;
+    }
+
+    else if (intent === "revenue") {
       const revenue = await getRevenueSummary();
 
       dataForAI = `
@@ -335,7 +452,12 @@ Giá bán VNPAY trung bình: ${formatVND(revenue.averagePrice)}
 
       dataForAI = `
 Top phim theo số lượng vé/giao dịch:
-${topMovies.map((item, index) => `${index + 1}. ${item.name}: ${item.count.toLocaleString("vi-VN")} vé/giao dịch`).join("\n")}
+${topMovies
+  .map(
+    (item, index) =>
+      `${index + 1}. ${item.name}: ${item.count.toLocaleString("vi-VN")} vé/giao dịch`
+  )
+  .join("\n")}
 `;
     }
 
@@ -344,7 +466,12 @@ ${topMovies.map((item, index) => `${index + 1}. ${item.name}: ${item.count.toLoc
 
       dataForAI = `
 Top tỉnh/thành theo số lượng vé/giao dịch:
-${topProvinces.map((item, index) => `${index + 1}. ${item.name}: ${item.count.toLocaleString("vi-VN")} vé/giao dịch`).join("\n")}
+${topProvinces
+  .map(
+    (item, index) =>
+      `${index + 1}. ${item.name}: ${item.count.toLocaleString("vi-VN")} vé/giao dịch`
+  )
+  .join("\n")}
 `;
     }
 
@@ -353,40 +480,73 @@ ${topProvinces.map((item, index) => `${index + 1}. ${item.name}: ${item.count.to
 
       dataForAI = `
 Top rạp theo số lượng vé/giao dịch:
-${topCinemas.map((item, index) => `${index + 1}. ${item.name}: ${item.count.toLocaleString("vi-VN")} vé/giao dịch`).join("\n")}
+${topCinemas
+  .map(
+    (item, index) =>
+      `${index + 1}. ${item.name}: ${item.count.toLocaleString("vi-VN")} vé/giao dịch`
+  )
+  .join("\n")}
 `;
     }
 
     else {
       const totalRows = await getTotalRows();
-      const topMovies = await getTopByColumn(COLS.movie, 5);
-      const topProvinces = await getTopByColumn(COLS.province, 5);
+      const ragContext = await searchRAG(userMessage);
 
       dataForAI = `
-Tổng số dòng dữ liệu: ${totalRows.toLocaleString("vi-VN")}
+Tổng số dòng dữ liệu ước tính: ${totalRows.toLocaleString("vi-VN")}
 
-Top 5 phim theo số lượng vé/giao dịch:
-${topMovies.map((item, index) => `${index + 1}. ${item.name}: ${item.count.toLocaleString("vi-VN")}`).join("\n")}
-
-Top 5 tỉnh/thành theo số lượng vé/giao dịch:
-${topProvinces.map((item, index) => `${index + 1}. ${item.name}: ${item.count.toLocaleString("vi-VN")}`).join("\n")}
+Câu hỏi này chưa khớp với nhóm phân tích số liệu cụ thể.
+Hãy ưu tiên dùng kiến thức RAG nếu có liên quan.
 `;
+
+      const prompt = `
+Bạn là chatbot phân tích dữ liệu CGV.
+
+Kiến thức từ hệ thống RAG:
+${ragContext}
+
+Dữ liệu hiện có:
+${dataForAI}
+
+Câu hỏi người dùng:
+${userMessage}
+
+Yêu cầu:
+- Trả lời bằng tiếng Việt.
+- Ngắn gọn, rõ ràng.
+- Ưu tiên dùng dữ liệu và kiến thức được cung cấp.
+- Nếu không có dữ liệu thì nói rõ.
+`;
+
+      const botReply = await askAI(prompt);
+
+      return res.json({
+        intent,
+        reply: botReply,
+      });
     }
 
     const ragContext = await searchRAG(userMessage);
+
     const prompt = `
-      Bạn là chatbot phân tích dữ liệu CGV.
+Bạn là chatbot phân tích dữ liệu CGV.
 
-      Kiến thức từ hệ thống RAG: ${ragContext}
-      Dữ liệu hiện có: ${dataForAI}
-      Câu hỏi người dùng: ${userMessage}
+Kiến thức từ hệ thống RAG:
+${ragContext}
 
-      Yêu cầu:
-        - Trả lời bằng tiếng Việt.
-        - Ngắn gọn.
-        - Ưu tiên dùng dữ liệu và kiến thức được cung cấp.
-        - Nếu không có dữ liệu thì nói rõ.
-    `;
+Dữ liệu hiện có:
+${dataForAI}
+
+Câu hỏi người dùng:
+${userMessage}
+
+Yêu cầu:
+- Trả lời bằng tiếng Việt.
+- Ngắn gọn, rõ ràng.
+- Ưu tiên dùng dữ liệu và kiến thức được cung cấp.
+- Nếu không có dữ liệu thì nói rõ.
+`;
 
     const botReply = await askAI(prompt);
 
