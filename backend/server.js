@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const { createClient } = require("@supabase/supabase-js");
+const { pipeline } = require("@xenova/transformers");
 
 const app = express();
 
@@ -16,6 +17,37 @@ const supabase = createClient(
 );
 
 const TABLE_NAME = process.env.TABLE_NAME || "CGV";
+
+let embeddingPipeline = null;
+
+async function getEmbeddingPipeline() {
+  if (!embeddingPipeline) {
+
+    console.log("Loading embedding model...");
+
+    embeddingPipeline = await pipeline(
+      "feature-extraction",
+      "Xenova/all-MiniLM-L6-v2"
+    );
+
+    console.log("Embedding model loaded!");
+  }
+
+  return embeddingPipeline;
+}
+
+async function createEmbedding(text) {
+
+  const extractor = await getEmbeddingPipeline();
+
+  const output = await extractor(text, {
+    pooling: "mean",
+    normalize: true,
+  });
+
+  return Array.from(output.data);
+}
+
 const PORT = process.env.PORT || 3000;
 
 /* Tên cột trong Supabase */
@@ -27,7 +59,7 @@ const COLS = {
   bookingDate: "Ngày Đặt",
   showDate: "Ngày Chiếu",
   ticketType: "Loại vé",
-  listedPrice: "Giá niêm yết (Rap)",
+  listedPrice: "Giá niêm yết (Rạp)",
   vnPayPrice: "Giá bán (VNPAY)",
   vnPayTicketType: "Loại vé từ VNPAY",
 };
@@ -243,6 +275,36 @@ function detectIntent(message) {
 }
 
 /* API Chat */
+async function searchRAG(userMessage) {
+  try {
+    const queryEmbedding = await createEmbedding(userMessage);
+
+    const { data, error } = await supabase.rpc("match_rag_documents", {
+      query_embedding: queryEmbedding,
+      match_count: 3,
+    });
+
+    if (error) {
+      console.log("RAG VECTOR ERROR:", error);
+      return "";
+    }
+
+    if (!data || data.length === 0) {
+      return "";
+    }
+
+    return data
+      .map(
+        (doc) =>
+          `Tiêu đề: ${doc.title}\nNội dung: ${doc.content}\nĐộ liên quan: ${doc.similarity}`
+      )
+      .join("\n\n");
+  } catch (error) {
+    console.log("searchRAG error:", error);
+    return "";
+  }
+}
+
 app.post("/chat", async (req, res) => {
   const userMessage = req.body.message;
 
@@ -311,21 +373,20 @@ ${topProvinces.map((item, index) => `${index + 1}. ${item.name}: ${item.count.to
 `;
     }
 
+    const ragContext = await searchRAG(userMessage);
     const prompt = `
-Bạn là chatbot phân tích dữ liệu bán vé xem phim CGV.
+      Bạn là chatbot phân tích dữ liệu CGV.
 
-Dữ liệu truy vấn được từ Supabase:
-${dataForAI}
+      Kiến thức từ hệ thống RAG: ${ragContext}
+      Dữ liệu hiện có: ${dataForAI}
+      Câu hỏi người dùng: ${userMessage}
 
-Câu hỏi của người dùng:
-${userMessage}
-
-Yêu cầu:
-- Trả lời bằng tiếng Việt.
-- Ngắn gọn, rõ ràng.
-- Chỉ dựa vào dữ liệu được cung cấp.
-- Nếu dữ liệu chưa đủ để kết luận, hãy nói rõ.
-`;
+      Yêu cầu:
+        - Trả lời bằng tiếng Việt.
+        - Ngắn gọn.
+        - Ưu tiên dùng dữ liệu và kiến thức được cung cấp.
+        - Nếu không có dữ liệu thì nói rõ.
+    `;
 
     const botReply = await askAI(prompt);
 
@@ -338,6 +399,42 @@ Yêu cầu:
 
     res.status(500).json({
       reply: "Lỗi chatbot hoặc lỗi khi lấy dữ liệu từ Supabase.",
+      error: error.message,
+    });
+  }
+});
+
+app.post("/api/rag/embed", async (req, res) => {
+  try {
+    const { data: docs, error } = await supabase
+      .from("rag_documents")
+      .select("id, content")
+      .is("embedding", null);
+
+    if (error) throw error;
+
+    for (const doc of docs) {
+      const embedding = await createEmbedding(doc.content);
+
+      const { error: updateError } = await supabase
+        .from("rag_documents")
+        .update({
+          embedding: embedding,
+        })
+        .eq("id", doc.id);
+
+      if (updateError) throw updateError;
+    }
+
+    res.json({
+      success: true,
+      embedded: docs.length,
+    });
+  } catch (error) {
+    console.log("RAG EMBED ERROR:", error);
+
+    res.status(500).json({
+      success: false,
       error: error.message,
     });
   }
