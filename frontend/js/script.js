@@ -104,21 +104,31 @@ function loadConversation(id) {
 function toggleMenu(event, id) {
   event.stopPropagation();
 
-  const menu = document.getElementById(`menu-${id}`);
-  if (!menu) return;
-
-  document.querySelectorAll(".dropdown-menu").forEach(item => {
-    if (item !== menu) {
-      item.classList.remove("show");
-    }
-  });
-  menu.classList.toggle("show");
-}
-
-function closeAllDropdowns() {
   document.querySelectorAll(".dropdown-menu").forEach(menu => {
     menu.classList.remove("show");
+    menu.classList.remove("up");
+    menu.classList.remove("down");
   });
+
+  document.addEventListener("click", () => {
+  document.querySelectorAll(".dropdown-menu").forEach(menu => {
+    menu.classList.remove("show");
+    menu.classList.remove("up");
+    menu.classList.remove("down");
+  });
+});
+
+  const menu = document.getElementById(`menu-${id}`);
+  const rect = menu.parentElement.getBoundingClientRect();
+  const windowHeight = window.innerHeight;
+
+  if (rect.bottom > windowHeight - 120) {
+    menu.classList.add("up");
+  } else {
+    menu.classList.add("down");
+  }
+
+  menu.classList.add("show");
 }
 
 let deleteTargetId = null;

@@ -25,9 +25,12 @@ body {
 
 .logo {
   font-size: 22px;
-  font-weight: bold;
-  margin-bottom: 28px;
-  padding: 0 8px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #d60000, #ff4040, #ffffff
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.35));
 }
 
 .menu-item {
@@ -131,6 +134,7 @@ body {
 .new-chat {
   display: flex;
   align-items: center;
+  font-weight: 600;
   gap: 12px;
 }
 

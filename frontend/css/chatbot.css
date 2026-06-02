@@ -27,13 +27,17 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  height: 100vh;
 }
 
 .logo {
   font-size: 22px;
-  font-weight: bold;
-  margin-bottom: 28px;
-  padding: 0 8px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #d60000, #ff4040, #ffffff
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.35));
 }
 
 .new-chat {
@@ -64,6 +68,7 @@ body {
   padding: 14px 10px;
   color: #f1f1f1;
   font-size: 15px;
+  font-weight: 600;
   line-height: 1.5;
   cursor: pointer;
 }
@@ -83,8 +88,13 @@ body {
 /* Main */
 .main {
   flex: 1;
-  background: #0f1014;
   position: relative;
+  background: 
+    linear-gradient(rgba(15, 16, 20, 0.65), rgba(15, 16, 20, 0.5)),
+    url("../images/background_chat.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 /* Chat Area */
@@ -100,7 +110,7 @@ body {
 
 .chat-area.chat-mode {
   justify-content: flex-start;
-  padding-top: 120px;
+  padding-top: 60px;
 }
 
 h1 {
@@ -112,7 +122,7 @@ h1 {
 /* Messages Wrapper */
 .messages-wrapper {
   position: absolute;
-  top: 120px;
+  top: 60px;
   left: 0;
   right: 28px;
   bottom: 130px;
@@ -568,4 +578,71 @@ h1 {
 .main {
   flex: 1;
   transition: 0.3s;
+}
+
+/* Khu vực lịch sử chat */
+.recent-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 8px;
+  padding-right: 4px;
+}
+
+/* Scrollbar */
+.recent-wrapper::-webkit-scrollbar {
+  width: 0;
+}
+
+.recent-wrapper:hover::-webkit-scrollbar {
+  width: 4px;
+}
+
+.recent-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.recent-wrapper::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 20px;
+}
+
+.recent-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+.dropdown-menu.up {
+  top: auto;
+  bottom: 30px;
+}
+
+.dropdown-menu.down {
+  top: 30px;
+  bottom: auto;
+}
+
+.search-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 10px;
+  font-weight: 300;
+  color: #f1f1f1;
+  font-size: 15px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.search-item:hover {
+  background: #252525;
+  border-radius: 20px;
+}
+
+.sidebar.collapsed .search-item {
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.sidebar.collapsed .search-item .menu-text {
+  display: none;
 }
