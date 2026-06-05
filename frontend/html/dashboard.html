@@ -24,7 +24,7 @@
         <span class="menu-text">Power BI</span>
       </div>
 
-      <div class="menu-item" data-title="Chatbot" onclick="location.href='chatbot.html'">
+      <div class="menu-item" id="chatbotMenuItem" data-title="Chatbot" oncontextmenu="openChatbotContextMenu(event)" onclick="location.href='chatbot.html'">
         <span class="menu-icon">🗲</span>
         <span class="menu-text">Chatbot</span>
       </div>
@@ -42,6 +42,40 @@
     </main>
   </div>
 
+  <div class="context-menu" id="chatbotContextMenu">
+    <div onclick="openBubbleChat()">Mở bubble chat</div>
+  </div>
+
+  <div class="bubble-chat" id="bubbleChat">
+    <div class="bubble-header">
+    <span>Chatbot CGV</span>
+    <div class="bubble-controls">
+      <button onclick="minimizeBubbleChat()">−</button>
+      <button onclick="closeBubbleChat()">×</button>
+    </div>
+  </div>
+    <div class="bubble-messages" id="bubbleMessages"></div>
+
+    <div class="bubble-input">
+      <input
+        id="bubbleInput"
+        type="text"
+        placeholder="Hỏi chatbot..."
+        onkeydown="handleBubbleEnter(event)"
+      />
+      <button onclick="sendBubbleMessage()">➤</button>
+    </div>
+
+  </div>
+    <div
+    class="bubble-chat-icon"
+    id="bubbleChatIcon"
+    onclick="restoreBubbleChat()"
+  >
+    🗲
+  </div>
+
   <script src="../js/sidebar.js"></script>
+  <script src="../js/dashboard.js"></script>
 </body>
 </html>
