@@ -28,6 +28,10 @@ function detectIntent(message) {
     return "top_cinema_by_province";
   }
 
+  if (text.includes("tháng") && text.includes("doanh thu") && !text.includes("phim nào") && !text.includes("của phim")) {
+    return "monthly_revenue";
+  }
+
   if (text.includes("phim") && text.includes("tháng")) {
     return "movie_month_trend";
   }
@@ -98,6 +102,10 @@ function detectIntent(message) {
 
   if (text.includes("doanh thu cao") && (text.includes("giao dịch thấp") || text.includes("lượng giao dịch thấp")) ) {
     return "high_revenue_low_transaction";
+  }
+
+  if (text.includes("săn deal") || text.includes("khuyến mãi") || text.includes("promotion") || text.includes("promo")) {
+    return "promotion_analysis";
   }
 
   return "general";

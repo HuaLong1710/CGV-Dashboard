@@ -316,6 +316,39 @@ async function getHighRevenueLowTransactionProvinces(limit = 10) {
   return data;
 }
 
+async function getPromotionByProvince(limit = 10) {
+  const { data, error } = await supabase
+    .from("promo_province_stats")
+    .select("*")
+    .order("promo_rate", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data;
+}
+
+async function getMonthlyStats() {
+  const { data, error } = await supabase
+    .from("monthly_stats")
+    .select("*")
+    .order("month_number", { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+async function getMonthStats(monthNumber, yearNumber = 2025) {
+  const { data, error } = await supabase
+    .from("monthly_stats")
+    .select("*")
+    .eq("month_number", monthNumber)
+    .eq("year_number", yearNumber)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
 module.exports = {
   getTotalRows,
   getTopByColumn,
@@ -336,4 +369,7 @@ module.exports = {
   getCinemaExpansionCandidates,
   getTicketBusinessValue,
   getHighRevenueLowTransactionProvinces,
+  getPromotionByProvince,
+  getMonthlyStats,
+  getMonthStats,
 };

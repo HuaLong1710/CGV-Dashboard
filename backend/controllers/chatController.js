@@ -21,6 +21,9 @@ const {
   getCinemaExpansionCandidates,
   getTicketBusinessValue,
   getHighRevenueLowTransactionProvinces,
+  getPromotionByProvince,
+  getMonthlyStats,
+  getMonthStats,
 } = require("../services/statsService");
 
 const PROVINCES = require("../utils/provinces");
@@ -56,6 +59,20 @@ function extractProvince(message) {
     .split(" ")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+function extractMonthNumber(message) {
+  const text = message.toLowerCase();
+
+  const match = text.match(/tháng\s*(\d{1,2})/);
+
+  if (!match) return null;
+
+  const month = Number(match[1]);
+
+  if (month < 1 || month > 12) return null;
+
+  return month;
 }
 
 /* API kiểm tra backend */
@@ -316,6 +333,58 @@ async function chat(req, res) {
     - Tìm các tỉnh có giá trị trung bình cao nhưng không nhất thiết có giao dịch cao nhất.
     - Đây là tín hiệu để xem xét phân khúc khách hàng có giá trị cao.
     `;
+    }
+
+    else if (intent === "promotion_analysis") {
+      const rows = await getPromotionByProvince(10);
+      dataForAI = `
+    Tỷ lệ sử dụng khuyến mãi theo tỉnh:
+
+    ${rows.map((item,index)=>
+    `${index+1}. ${item.province_name}: ${Number(item.promo_rate).toFixed(2)}%`
+    ).join("\n")}
+    Yêu cầu:
+    - Phân tích tỉnh nào phản hồi tốt nhất với chương trình khuyến mãi.
+    - Đưa ra nhận xét marketing.
+    `;
+    }
+
+    else if (intent === "monthly_revenue") {
+      const monthNumber = extractMonthNumber(userMessage);
+
+      if (!monthNumber) {
+        const rows = await getMonthlyStats();
+
+        dataForAI = `
+    Doanh thu theo tất cả các tháng:
+    ${rows.map((item) =>
+      `Tháng ${item.month_number}: ${formatVND(item.total_revenue)} - ${Number(item.transaction_count).toLocaleString("vi-VN")} giao dịch`
+    ).join("\n")}
+    `;
+      } else {
+        const currentMonth = await getMonthStats(monthNumber);
+        const previousMonthNumber = monthNumber - 1;
+
+        let previousText = "Không có dữ liệu tháng trước để so sánh.";
+
+        if (previousMonthNumber >= 1) {
+          const previousMonth = await getMonthStats(previousMonthNumber);
+
+          const changeRate =
+            ((Number(currentMonth.total_revenue) - Number(previousMonth.total_revenue)) /
+              Number(previousMonth.total_revenue)) * 100;
+
+          previousText = `
+    Doanh thu tháng ${previousMonthNumber}: ${formatVND(previousMonth.total_revenue)}
+    Mức thay đổi so với tháng ${previousMonthNumber}: ${changeRate.toFixed(2)}%
+    `;
+        }
+        dataForAI = `
+    Doanh thu tháng ${monthNumber}: ${formatVND(currentMonth.total_revenue)}
+    Số giao dịch tháng ${monthNumber}: ${Number(currentMonth.transaction_count).toLocaleString("vi-VN")}
+    ${previousText}
+    `;
+      }
     }
 
         else {
