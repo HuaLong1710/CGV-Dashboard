@@ -2,6 +2,7 @@ const detectIntent = require("../utils/detechIntent");
 const { formatVND } = require("../utils/format");
 const { askAI } = require("../services/aiService");
 const { searchRAG } = require("../services/ragService");
+const { loadDocs } = require("../services/docService");
 const { extractMovieName } = require("../services/movieService");
 
 const {
@@ -86,6 +87,7 @@ async function chat(req, res) {
 
   try {
     const intent = detectIntent(userMessage);
+    const docsContent = loadDocs();
     let dataForAI = "";
 
     if (intent === "forecast") {
@@ -406,6 +408,9 @@ async function chat(req, res) {
     const prompt = `
     Bạn là chatbot phân tích dữ liệu CGV/VNPAY trong đề tài ứng dụng BI hỗ trợ ra quyết định kinh doanh.
 
+    Kiến thức từ file tài liệu Markdown:
+    ${docsContent}
+    
     Kiến thức từ hệ thống RAG:
     ${ragContext}
 
