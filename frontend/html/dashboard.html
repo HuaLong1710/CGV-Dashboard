@@ -47,26 +47,39 @@
   </div>
 
   <div class="bubble-chat" id="bubbleChat">
-    <div class="bubble-header">
-    <span>Chatbot CGV</span>
-    <div class="bubble-controls">
-      <button onclick="minimizeBubbleChat()">−</button>
-      <button onclick="closeBubbleChat()">×</button>
-    </div>
-  </div>
-    <div class="bubble-messages" id="bubbleMessages"></div>
-
-    <div class="bubble-input">
-      <input
-        id="bubbleInput"
-        type="text"
-        placeholder="Hỏi chatbot..."
-        onkeydown="handleBubbleEnter(event)"
-      />
-      <button onclick="sendBubbleMessage()">➤</button>
+    <div class="bubble-sidebar" id="bubbleSidebar">
+      <button class="bubble-new-chat" onclick="newBubbleChat()">✎ Cuộc trò chuyện mới</button>
+      <div class="bubble-sidebar-title">Gần đây</div>
+      <div class="bubble-history-list" id="bubbleHistoryList"></div>
     </div>
 
+    <div class="bubble-main">
+      <div class="bubble-header" onpointerdown="startDragBubble(event)">
+        <span id="bubbleTitle" onclick="toggleBubbleSidebar(event)">Chatbot CGV</span>
+        <div class="bubble-controls">
+          <button onclick="minimizeBubbleChat()">−</button>
+          <button onclick="closeBubbleChat()">×</button>
+        </div>
+      </div>
+
+      <div class="bubble-messages" id="bubbleMessages"></div>
+
+      <div class="bubble-input">
+        <input id="bubbleInput" type="text" placeholder="Hỏi chatbot..." onkeydown="handleBubbleEnter(event)" />
+        <button onclick="sendBubbleMessage()">➤</button>
+      </div>
+    </div>
+
+    <div class="resize-edge left" onpointerdown="startResizeBubble(event, 'left')"></div>
+    <div class="resize-edge right" onpointerdown="startResizeBubble(event, 'right')"></div>
+    <div class="resize-edge top" onpointerdown="startResizeBubble(event, 'top')"></div>
+    <div class="resize-edge bottom" onpointerdown="startResizeBubble(event, 'bottom')"></div>
+    <div class="resize-corner top-left" onpointerdown="startResizeBubble(event, 'top-left')"></div>
+    <div class="resize-corner top-right" onpointerdown="startResizeBubble(event, 'top-right')"></div>
+    <div class="resize-corner bottom-left" onpointerdown="startResizeBubble(event, 'bottom-left')"></div>
+    <div class="resize-corner bottom-right" onpointerdown="startResizeBubble(event, 'bottom-right')"></div>
   </div>
+
     <div
     class="bubble-chat-icon"
     id="bubbleChatIcon"
