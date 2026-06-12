@@ -337,6 +337,30 @@ async function getMonthlyStats() {
   return data;
 }
 
+async function getHighestRevenueMonth() {
+  const { data, error } = await supabase
+    .from("monthly_stats")
+    .select("*")
+    .order("total_revenue", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+async function getLowestRevenueMonth() {
+  const { data, error } = await supabase
+    .from("monthly_stats")
+    .select("*")
+    .order("total_revenue", { ascending: true })
+    .limit(1)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 async function getMonthStats(monthNumber, yearNumber = 2025) {
   const { data, error } = await supabase
     .from("monthly_stats")
@@ -344,6 +368,143 @@ async function getMonthStats(monthNumber, yearNumber = 2025) {
     .eq("month_number", monthNumber)
     .eq("year_number", yearNumber)
     .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+async function getWeekdayStats() {
+  const { data, error } = await supabase
+    .from("weekday_stats")
+    .select("*")
+    .order("weekday_number", { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+async function getHighestDemandWeekday() {
+  const { data, error } = await supabase
+    .from("weekday_stats")
+    .select("*")
+    .order("tickets", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+async function getLowestDemandWeekday() {
+  const { data, error } = await supabase
+    .from("weekday_stats")
+    .select("*")
+    .order("tickets", { ascending: true })
+    .limit(1)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+async function getRegionStats() {
+  const { data, error } = await supabase
+    .from("region_stats")
+    .select("*")
+    .order("total_revenue", {
+      ascending: false,
+    });
+
+  if (error) throw error;
+  return data;
+}
+
+async function getTopRegion() {
+  const { data, error } = await supabase
+    .from("region_stats")
+    .select("*")
+    .order("total_revenue", {
+      ascending: false,
+    })
+    .limit(1)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+async function getPriceRegionStats() {
+  const { data, error } = await supabase
+    .from("price_region_stats")
+    .select("*")
+    .order("avg_price", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+async function getTicketRegionStats(limit = 20) {
+  const { data, error } = await supabase
+    .from("ticket_region_stats")
+    .select("*")
+    .order("tickets", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data;
+}
+
+async function getMovieRevenueShare(limit = 10) {
+  const { data, error } = await supabase
+    .from("movie_stats")
+    .select("*")
+    .order("revenue_share", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data;
+}
+
+async function getMovieEfficiencyStats(limit = 10) {
+  const { data, error } = await supabase
+    .from("movie_efficiency_stats")
+    .select("*")
+    .order("revenue_per_day", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data;
+}
+
+async function getEarlyBookingMovies(limit = 10) {
+  const { data, error } = await supabase
+    .from("movie_booking_stats")
+    .select("*")
+    .order("early_booking_rate", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data;
+}
+
+async function getMonthlyGrowthStats() {
+  const { data, error } = await supabase
+    .from("monthly_growth_stats")
+    .select("*")
+    .order("month_number");
+
+  if (error) throw error;
+  return data;
+}
+
+async function getMarketingOpportunities(limit = 10) {
+  const { data, error } = await supabase
+    .from("marketing_opportunity_stats")
+    .select("*")
+    .order("revenue", {
+      ascending: true
+    })
+    .limit(limit);
 
   if (error) throw error;
   return data;
@@ -372,4 +533,18 @@ module.exports = {
   getPromotionByProvince,
   getMonthlyStats,
   getMonthStats,
+  getHighestRevenueMonth,
+  getLowestRevenueMonth,
+  getWeekdayStats,
+  getHighestDemandWeekday,
+  getLowestDemandWeekday,
+  getRegionStats,
+  getTopRegion,
+  getPriceRegionStats,
+  getTicketRegionStats,
+  getMovieRevenueShare,
+  getMovieEfficiencyStats,
+  getEarlyBookingMovies,
+  getMonthlyGrowthStats,
+  getMarketingOpportunities,
 };

@@ -25,6 +25,20 @@ const {
   getPromotionByProvince,
   getMonthlyStats,
   getMonthStats,
+  getHighestRevenueMonth,
+  getLowestRevenueMonth,
+  getWeekdayStats,
+  getHighestDemandWeekday,
+  getLowestDemandWeekday,
+  getRegionStats,
+  getTopRegion,
+  getPriceRegionStats,
+  getTicketRegionStats,
+  getMovieRevenueShare,
+  getMovieEfficiencyStats,
+  getEarlyBookingMovies,
+  getMonthlyGrowthStats,
+  getMarketingOpportunities,
 } = require("../services/statsService");
 
 const PROVINCES = require("../utils/provinces");
@@ -353,10 +367,8 @@ async function chat(req, res) {
 
     else if (intent === "monthly_revenue") {
       const monthNumber = extractMonthNumber(userMessage);
-
       if (!monthNumber) {
         const rows = await getMonthlyStats();
-
         dataForAI = `
     Doanh thu theo tất cả các tháng:
     ${rows.map((item) =>
@@ -365,36 +377,243 @@ async function chat(req, res) {
     `;
       } else {
         const currentMonth = await getMonthStats(monthNumber);
-        const previousMonthNumber = monthNumber - 1;
+        if (!currentMonth) {
+          dataForAI = `
+    Không có dữ liệu doanh thu cho tháng ${monthNumber}.
+    `;
+        } else {
+          const previousMonthNumber = monthNumber - 1;
+          let previousText = "Không có dữ liệu tháng trước để so sánh.";
 
-        let previousText = "Không có dữ liệu tháng trước để so sánh.";
+          if (previousMonthNumber >= 1) {
+            const previousMonth = await getMonthStats(previousMonthNumber);
 
-        if (previousMonthNumber >= 1) {
-          const previousMonth = await getMonthStats(previousMonthNumber);
-
-          const changeRate =
-            ((Number(currentMonth.total_revenue) - Number(previousMonth.total_revenue)) /
-              Number(previousMonth.total_revenue)) * 100;
-
-          previousText = `
+            if (previousMonth) {
+              const changeRate =
+                ((Number(currentMonth.total_revenue) - Number(previousMonth.total_revenue)) /
+                  Number(previousMonth.total_revenue)) * 100;
+              previousText = `
     Doanh thu tháng ${previousMonthNumber}: ${formatVND(previousMonth.total_revenue)}
     Mức thay đổi so với tháng ${previousMonthNumber}: ${changeRate.toFixed(2)}%
     `;
-        }
-        dataForAI = `
+            }
+          }
+          dataForAI = `
     Doanh thu tháng ${monthNumber}: ${formatVND(currentMonth.total_revenue)}
     Số giao dịch tháng ${monthNumber}: ${Number(currentMonth.transaction_count).toLocaleString("vi-VN")}
+    Giá bán trung bình tháng ${monthNumber}: ${formatVND(currentMonth.avg_price)}
     ${previousText}
     `;
+        }
       }
+    }
+
+    else if (intent === "monthly_analysis") {
+      const rows = await getMonthlyStats();
+      dataForAI = `
+    Doanh thu theo từng tháng:
+    ${rows.map((item) =>
+    `Tháng ${item.month_number}:
+    - Doanh thu: ${formatVND(item.total_revenue)}
+    - Số giao dịch/vé bán: ${Number(item.transaction_count).toLocaleString("vi-VN")}
+    - Giá bán trung bình: ${formatVND(item.avg_price)}
+    - Giá niêm yết trung bình: ${formatVND(item.avg_listed_price)}
+    - Tỷ lệ chiết khấu trung bình: ${Number(item.discount_rate || 0).toFixed(2)}%`
+    ).join("\n\n")}
+    `;
+    }
+
+    else if (intent === "highest_month") {
+      const rows = await getMonthlyStats();
+      const month = [...rows].sort(
+        (a, b) => Number(b.total_revenue) - Number(a.total_revenue)
+      )[0];
+
+      dataForAI = `
+    Tháng có doanh thu cao nhất:
+    Tháng ${month.month_number}
+    Doanh thu: ${formatVND(month.total_revenue)}
+    Số giao dịch/vé bán: ${Number(month.transaction_count).toLocaleString("vi-VN")}
+    Giá bán trung bình: ${formatVND(month.avg_price)}
+    `;
+    }
+
+    else if (intent === "lowest_month") {
+      const rows = await getMonthlyStats();
+      const month = [...rows].sort(
+        (a, b) => Number(a.total_revenue) - Number(b.total_revenue)
+      )[0];
+      dataForAI = `
+    Tháng có doanh thu thấp nhất:
+    Tháng ${month.month_number}
+    Doanh thu: ${formatVND(month.total_revenue)}
+    Số giao dịch/vé bán: ${Number(month.transaction_count).toLocaleString("vi-VN")}
+    Giá bán trung bình: ${formatVND(month.avg_price)}
+    `;
+    }
+
+    else if (intent === "weekday_analysis") {
+      const rows = await getWeekdayStats();
+      dataForAI = `
+    Số vé bán và doanh thu theo ngày trong tuần:
+    ${rows.map((item) =>
+    `- ${item.weekday}: ${Number(item.tickets).toLocaleString("vi-VN")} vé, doanh thu ${formatVND(item.revenue)}, giá bán TB ${formatVND(item.avg_price)}`
+    ).join("\n")}
+    `;
+    }
+
+    else if (intent === "highest_weekday") {
+      const day = await getHighestDemandWeekday();
+      dataForAI = `
+    Ngày trong tuần có nhu cầu mua vé cao nhất:
+    ${day.weekday}
+    Số vé bán: ${Number(day.tickets).toLocaleString("vi-VN")}
+    Doanh thu: ${formatVND(day.revenue)}
+    Giá bán trung bình: ${formatVND(day.avg_price)}
+    `;
+    }
+
+    else if (intent === "lowest_weekday") {
+      const day = await getLowestDemandWeekday();
+      dataForAI = `
+    Ngày trong tuần có nhu cầu mua vé thấp nhất:
+    ${day.weekday}
+    Số vé bán: ${Number(day.tickets).toLocaleString("vi-VN")}
+    Doanh thu: ${formatVND(day.revenue)}
+    Giá bán trung bình: ${formatVND(day.avg_price)}
+    `;
+    }
+
+    else if (intent === "region_analysis") {
+      const rows = await getRegionStats();
+      dataForAI = `
+    Doanh thu theo vùng miền:
+    ${rows.map((item)=>
+    `${item.region}
+    - Doanh thu: ${formatVND(item.total_revenue)}
+    - Số giao dịch: ${Number(item.transaction_count).toLocaleString("vi-VN")}
+    - Giá bán trung bình: ${formatVND(item.avg_price)}`
+    ).join("\n\n")}
+    `;
+    }
+
+    else if (intent === "top_region") {
+      const region = await getTopRegion();
+      dataForAI = `
+    Khu vực đóng góp doanh thu lớn nhất:
+    ${region.region}
+    Doanh thu:
+    ${formatVND(region.total_revenue)}
+    Số giao dịch:
+    ${Number(region.transaction_count).toLocaleString("vi-VN")}
+    Giá bán trung bình:
+    ${formatVND(region.avg_price)}
+    `;
+    }
+
+    else if (intent === "price_region_analysis") {
+      const rows = await getPriceRegionStats();
+      dataForAI = `
+    Phân tích giá bán theo vùng miền:
+    ${rows.map((item) =>
+    `${item.region}:
+    - Giá bán trung bình: ${formatVND(item.avg_price)}
+    - Độ lệch chuẩn giá: ${formatVND(item.std_price)}
+    - Giá thấp nhất: ${formatVND(item.min_price)}
+    - Giá cao nhất: ${formatVND(item.max_price)}
+    - Số giao dịch: ${Number(item.transaction_count).toLocaleString("vi-VN")}`
+    ).join("\n\n")}
+    Yêu cầu:
+    - So sánh giá bán trung bình giữa các vùng miền.
+    - Nhận xét vùng nào có mức giá ổn định hơn dựa trên độ lệch chuẩn.
+    `;
+    }
+
+    else if (intent === "ticket_region_analysis") {
+      const rows = await getTicketRegionStats(20);
+      dataForAI = `
+    Loại vé được sử dụng theo tỉnh/thành:
+    ${rows.map((item, index) =>
+    `${index + 1}. ${item.province} - ${item.ticket_type}: ${Number(item.tickets).toLocaleString("vi-VN")} vé, doanh thu ${formatVND(item.revenue)}`
+    ).join("\n")}
+    Yêu cầu:
+    - Xác định các loại vé được sử dụng chủ đạo.
+    - Nhận xét sự khác biệt theo tỉnh/thành nếu có.
+    `;
+    }
+
+    else if (intent === "movie_revenue_share") {
+      const rows = await getMovieRevenueShare(10);
+      dataForAI = `
+    Top phim chiếm tỷ trọng doanh thu lớn nhất:
+    ${rows.map((item, index) =>
+    `${index + 1}. ${item.movie_name}: ${formatVND(item.total_revenue)} - Tỷ trọng ${Number(item.revenue_share || 0).toFixed(2)}%`
+    ).join("\n")}
+    `;
+    }
+
+    else if (intent === "movie_efficiency") {
+      const rows = await getMovieEfficiencyStats(10);
+      dataForAI = `
+    Top phim theo doanh thu/ngày chiếu:
+    ${rows.map((item, index) =>
+    `${index + 1}. ${item.movie_name}: ${formatVND(item.revenue_per_day)}/ngày - Tổng doanh thu ${formatVND(item.revenue)} - ${Number(item.show_days).toLocaleString("vi-VN")} ngày chiếu`
+    ).join("\n")}
+    Yêu cầu:
+    - Nhận xét phim nào có hiệu quả doanh thu/ngày tốt.
+    - Nếu phim có số ngày chiếu ngắn nhưng doanh thu/ngày cao, nêu đây là dấu hiệu hiệu quả tốt.
+    `;
+    }
+
+    else if (intent === "early_booking") {
+      const rows = await getEarlyBookingMovies(10);
+      dataForAI = `
+    Top phim có tỷ lệ đặt vé sớm cao nhất:
+    ${rows.map((item, index) =>
+    `${index + 1}. ${item.movie_name}: ${Number(item.early_booking_rate || 0).toFixed(2)}% - Trung bình đặt trước ${Number(item.avg_booking_gap_days || 0).toFixed(2)} ngày`
+    ).join("\n")}
+    Yêu cầu:
+    - Nhận xét phim nào có tỷ lệ đặt vé sớm cao.
+    - Giải thích đây có thể là dấu hiệu mức độ quan tâm trước khi phim chiếu.
+    `;
+    }
+
+    else if (intent === "growth_driver") {
+      const rows = await getMonthlyGrowthStats();
+      dataForAI = `
+    Tăng trưởng doanh thu theo tháng:
+    ${rows.map(item =>
+    `Tháng ${item.month_number}
+    - Doanh thu tăng: ${item.revenue_growth ?? 0}%
+    - Vé bán tăng: ${item.ticket_growth ?? 0}%
+    - Giá trung bình tăng: ${item.price_growth ?? 0}%`
+    ).join("\n\n")}
+    Yêu cầu:
+    - Phân tích doanh thu tăng chủ yếu do số vé hay do giá bán.
+    - Không suy đoán ngoài dữ liệu.
+    `;
+    }
+
+    else if (intent === "marketing_opportunity") {
+      const rows = await getMarketingOpportunities(10);
+      dataForAI = `
+    Các tỉnh/thành có thể xem xét ưu tiên marketing:
+    ${rows.map((item,index)=>
+    `${index+1}. ${item.province_name}
+    - Doanh thu: ${formatVND(item.revenue)}
+    - Giao dịch: ${Number(item.tickets).toLocaleString("vi-VN")}
+    - Giá TB: ${formatVND(item.avg_price)}`
+    ).join("\n\n")}
+    Yêu cầu:
+    - Chỉ xem đây là gợi ý marketing sơ bộ.
+    - Nêu rõ cần thêm dữ liệu dân số, thu nhập và cạnh tranh để ra quyết định cuối cùng.
+    `;
     }
 
         else {
       const totalRows = await getTotalRows();
-
       dataForAI = `
       Tổng số dòng dữ liệu ước tính: ${totalRows.toLocaleString("vi-VN")}
-
       Câu hỏi này chưa khớp với nhóm phân tích số liệu cụ thể.
       Hãy ưu tiên dùng kiến thức RAG nếu có liên quan.
       `;

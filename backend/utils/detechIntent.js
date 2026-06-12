@@ -16,6 +16,10 @@ function detectIntent(message) {
     return "total_rows";
   }
 
+  if (text.includes("chiết khấu trung bình") || text.includes("mức giảm giá trung bình")) {
+    return "avg_discount";
+  }
+
   if (text.includes("giá trung bình") || text.includes("giá vé trung bình") || text.includes("vnpay trung bình")) {
     return "average_price";
   }
@@ -106,6 +110,58 @@ function detectIntent(message) {
 
   if (text.includes("săn deal") || text.includes("khuyến mãi") || text.includes("promotion") || text.includes("promo")) {
     return "promotion_analysis";
+  }
+
+  if (text.includes("ngày nào") && (text.includes("nhu cầu cao") || text.includes("bán vé cao") || text.includes("nhiều vé") || text.includes("cao nhất"))) {
+    return "highest_weekday";
+  }
+
+  if (text.includes("ngày nào") && (text.includes("nhu cầu thấp") || text.includes("bán vé thấp") || text.includes("ít vé") || text.includes("thấp nhất"))) {
+    return "lowest_weekday";
+  }
+
+  if (text.includes("ngày trong tuần") || text.includes("theo thứ") || text.includes("theo ngày")) {
+    return "weekday_analysis";
+  }
+
+  if (text.includes("miền") && (text.includes("doanh thu") || text.includes("vùng"))) {
+    return "region_analysis";
+  }
+
+  if (text.includes("khu vực") && text.includes("doanh thu lớn nhất")) {
+    return "top_region";
+  }
+
+  if (text.includes("miền nào doanh thu cao nhất")) {
+    return "top_region";
+  }
+
+  if (text.includes("giá bán trung bình giữa các khu vực") || text.includes("giá trung bình giữa các khu vực") || text.includes("giá theo vùng miền") || text.includes("giá giữa các miền")) {
+    return "price_region_analysis";
+  }
+
+  if (text.includes("loại vé nào được dùng chủ đạo") || text.includes("loại vé chủ đạo") || text.includes("loại vé theo tỉnh") || text.includes("loại vé theo khu vực")) {
+    return "ticket_region_analysis";
+  }
+
+  if (text.includes("tỷ trọng") && text.includes("phim")) {
+    return "movie_revenue_share";
+  }
+
+  if (text.includes("doanh thu/ngày") || text.includes("doanh thu mỗi ngày") || text.includes("ngày chiếu") || text.includes("chiếu ngắn") || text.includes("chiếu dài")) {
+    return "movie_efficiency";
+  }
+
+  if (text.includes("đặt vé sớm") || text.includes("tỷ lệ đặt vé sớm") || text.includes("đặt trước")) {
+    return "early_booking";
+  }
+
+  if (text.includes("doanh thu tăng") && (text.includes("giá") || text.includes("vé"))) {
+    return "growth_driver";
+  }
+
+  if (text.includes("marketing") || text.includes("nên quảng bá ở đâu") || text.includes("nên đầu tư ở đâu")) {
+    return "marketing_opportunity";
   }
 
   return "general";
