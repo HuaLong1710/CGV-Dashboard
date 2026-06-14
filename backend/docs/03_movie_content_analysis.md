@@ -1,6 +1,6 @@
 # BÁO CÁO INSIGHT PHÂN TÍCH DỮ LIỆU BÁN VÉ CGV (VNPAY)
 
-## Insight 3: Đặc điểm Danh mục Phim được Khách hàng Lựa chọn
+## Đặc điểm Danh mục Phim được Khách hàng Lựa chọn
 
 ### Mô tả phân tích
 

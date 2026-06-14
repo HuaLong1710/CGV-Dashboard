@@ -1,6 +1,6 @@
 # BÁO CÁO INSIGHT PHÂN TÍCH DỮ LIỆU BÁN VÉ CGV (VNPAY)
 
-## Insight 1: Cấu trúc Thị trường theo Khu vực Địa lý
+## Cấu trúc Thị trường theo Khu vực Địa lý
 
 ### Mô tả phân tích
 

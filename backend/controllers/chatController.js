@@ -39,37 +39,27 @@ const {
   getEarlyBookingMovies,
   getMonthlyGrowthStats,
   getMarketingOpportunities,
+  getAgeRatingStats,
+  getCountryStats,
+  getRuntimeStats,
+  getTicketGenreStats,
+  getTicketMonthStats,
+  getMovieCategoryStats,
+  getMovieOutliers,
 } = require("../services/statsService");
 
 const PROVINCES = require("../utils/provinces");
 
 function extractProvince(message) {
   const text = message.toLowerCase();
-
   const province = PROVINCES.find((p) => text.includes(p));
 
   if (!province) return "";
-
-  if (province === "hcm" || province === "sài gòn") {
-    return "Hồ Chí Minh";
-  }
-
-  if (province === "huế") {
-    return "Thừa Thiên Huế";
-  }
-
-  if (province === "nha trang") {
-    return "Khánh Hòa";
-  }
-
-  if (province === "đà lạt") {
-    return "Lâm Đồng";
-  }
-
-  if (province === "vũng tàu") {
-    return "Bà Rịa - Vũng Tàu";
-  }
-
+  if (province === "hcm" || province === "sài gòn") { return "Hồ Chí Minh"; }
+  if (province === "huế") { return "Thừa Thiên Huế"; }
+  if (province === "nha trang") { return "Khánh Hòa"; }
+  if (province === "đà lạt") { return "Lâm Đồng"; }
+  if (province === "vũng tàu") { return "Bà Rịa - Vũng Tàu"; }
   return province
     .split(" ")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -90,6 +80,23 @@ function extractMonthNumber(message) {
   return month;
 }
 
+function detectTicketType(message) {
+  const text = message.toLowerCase();
+
+  if (text.includes("normal")) return "normal";
+  if (text.includes("resell")) return "resell";
+
+  if (
+    text.includes("promotion") ||
+    text.includes("promo") ||
+    text.includes("khuyến mãi")
+  ) {
+    return "promotion";
+  }
+
+  return null;
+}
+
 /* API kiểm tra backend */
 async function chat(req, res) {
   const userMessage = req.body.message;
@@ -101,6 +108,8 @@ async function chat(req, res) {
 
   try {
     const intent = detectIntent(userMessage);
+      console.log("QUESTION:", userMessage);
+      console.log("INTENT:", intent);
     const docsContent = loadDocs();
     let dataForAI = "";
 
@@ -112,19 +121,37 @@ async function chat(req, res) {
     `;
     }
 
-    else if (intent === "total_rows") {
-      const overview = await getOverviewStats();
+    else if (intent === "price_trend_compare") {
+      const rows = await getMonthlyStats();
       dataForAI = `
-    Tổng số giao dịch/vé trong dữ liệu: ${Number(overview.transaction_count).toLocaleString("vi-VN")}
+    Biến động giá bán trung bình và giá niêm yết trung bình theo tháng:
+    ${rows.map((item) =>
+    `Tháng ${item.month_number}:
+    - Giá bán trung bình VNPAY: ${formatVND(item.avg_price)}
+    - Giá niêm yết trung bình: ${formatVND(item.avg_listed_price)}
+    - Tỷ lệ chiết khấu trung bình: ${Number(item.discount_rate || 0).toFixed(2)}%`
+    ).join("\n")}
+
+    Yêu cầu:
+    - So sánh xu hướng biến động giữa giá bán trung bình VNPAY và giá niêm yết trung bình.
+    - Nhận xét hai chỉ số có biến động cùng chiều hay không.
+    - Nếu có tháng lệch xu hướng, hãy nêu rõ.
     `;
     }
 
     else if (intent === "average_price") {
-      const overview = await getOverviewStats();
+      const summary = await getOverviewStats();
       dataForAI = `
-    Giá bán VNPAY trung bình: ${formatVND(overview.avg_price)}
-    Tổng số giao dịch: ${Number(overview.transaction_count).toLocaleString("vi-VN")}
-    Tổng doanh thu VNPAY: ${formatVND(overview.total_revenue)}
+    Tổng doanh thu:
+    ${formatVND(summary.total_revenue)}
+    Tổng số vé bán:
+    ${Number(summary.transaction_count).toLocaleString("vi-VN")}
+    Giá bán VNPAY trung bình:
+    ${formatVND(summary.avg_price)}
+    Yêu cầu:
+    - Đánh giá mức giá bán trung bình.
+    - Nêu số liệu cụ thể.
+    - Nhận xét ý nghĩa kinh doanh.
     `;
     }
 
@@ -196,6 +223,24 @@ async function chat(req, res) {
     ${topCinemas.map((item, index) =>
       `${index + 1}. ${item.cinema_name}: ${Number(item.transaction_count).toLocaleString("vi-VN")} giao dịch`
     ).join("\n")}
+    `;
+    }
+
+    else if (intent === "avg_discount") {
+      const overview = await getOverviewStats();
+      dataForAI = `
+    Mức chiết khấu trung bình:
+    ${(Number(overview.avg_discount_rate || 0) * 100).toFixed(2)}%
+    Tổng doanh thu theo giá niêm yết:
+    ${formatVND(overview.total_listed_revenue)}
+    Tổng doanh thu theo giá bán VNPAY:
+    ${formatVND(overview.total_revenue)}
+    Yêu cầu:
+    - Đánh giá mức chiết khấu trung bình có hợp lý không.
+    - Nếu chiết khấu dưới 10%: thấp.
+    - Nếu từ 10% đến dưới 20%: trung bình.
+    - Nếu từ 20% đến 30%: mạnh.
+    - Nếu trên 30%: rất mạnh, cần thận trọng về biên lợi nhuận.
     `;
     }
 
@@ -498,21 +543,50 @@ async function chat(req, res) {
     }
 
     else if (intent === "top_region") {
-      const region = await getTopRegion();
+      const rows = await getRegionStats();
+      const totalRevenue = rows.reduce(
+        (sum, item) => sum + Number(item.total_revenue || 0),
+        0
+      );
       dataForAI = `
-    Khu vực đóng góp doanh thu lớn nhất:
-    ${region.region}
-    Doanh thu:
-    ${formatVND(region.total_revenue)}
-    Số giao dịch:
-    ${Number(region.transaction_count).toLocaleString("vi-VN")}
-    Giá bán trung bình:
-    ${formatVND(region.avg_price)}
+    Bảng xếp hạng doanh thu theo vùng miền:
+    ${rows.map((item, index) => {
+      const share = totalRevenue > 0
+        ? (Number(item.total_revenue) / totalRevenue) * 100
+        : 0;
+      return `${index + 1}. ${item.region}
+    - Doanh thu: ${formatVND(item.total_revenue)}
+    - Tỷ trọng doanh thu: ${share.toFixed(2)}%
+    - Số giao dịch/vé bán: ${Number(item.transaction_count).toLocaleString("vi-VN")}
+    - Giá bán trung bình: ${formatVND(item.avg_price)}`;
+    }).join("\n\n")}
+    Yêu cầu:
+    - Xác định khu vực đóng góp doanh thu lớn nhất.
+    - Nêu số liệu cụ thể và tỷ trọng doanh thu.
+    - So sánh khu vực đứng đầu với các khu vực còn lại.
+    - Đưa ra nhận xét ý nghĩa kinh doanh.
     `;
     }
 
     else if (intent === "price_region_analysis") {
       const rows = await getPriceRegionStats();
+      const sortedByAvg = [...rows].sort(
+        (a, b) => Number(b.avg_price) - Number(a.avg_price)
+      );
+
+      const highest = sortedByAvg[0];
+      const lowest = sortedByAvg[sortedByAvg.length - 1];
+      const priceGap =
+        highest && lowest && Number(lowest.avg_price) > 0
+          ? ((Number(highest.avg_price) - Number(lowest.avg_price)) / Number(lowest.avg_price)) * 100
+          : 0;
+
+      const mostStable = [...rows].sort(
+        (a, b) => Number(a.std_price) - Number(b.std_price)
+      )[0];
+      const mostVolatile = [...rows].sort(
+        (a, b) => Number(b.std_price) - Number(a.std_price)
+      )[0];
       dataForAI = `
     Phân tích giá bán theo vùng miền:
     ${rows.map((item) =>
@@ -521,11 +595,18 @@ async function chat(req, res) {
     - Độ lệch chuẩn giá: ${formatVND(item.std_price)}
     - Giá thấp nhất: ${formatVND(item.min_price)}
     - Giá cao nhất: ${formatVND(item.max_price)}
-    - Số giao dịch: ${Number(item.transaction_count).toLocaleString("vi-VN")}`
+    - Số giao dịch/vé bán: ${Number(item.transaction_count).toLocaleString("vi-VN")}`
     ).join("\n\n")}
+    Tóm tắt so sánh:
+    - Khu vực có giá bán trung bình cao nhất: ${highest.region} (${formatVND(highest.avg_price)})
+    - Khu vực có giá bán trung bình thấp nhất: ${lowest.region} (${formatVND(lowest.avg_price)})
+    - Chênh lệch tương đối giữa cao nhất và thấp nhất: ${priceGap.toFixed(2)}%
+    - Khu vực có giá ổn định nhất: ${mostStable.region} (độ lệch chuẩn ${formatVND(mostStable.std_price)})
+    - Khu vực có độ phân tán giá lớn nhất: ${mostVolatile.region} (độ lệch chuẩn ${formatVND(mostVolatile.std_price)})
     Yêu cầu:
-    - So sánh giá bán trung bình giữa các vùng miền.
-    - Nhận xét vùng nào có mức giá ổn định hơn dựa trên độ lệch chuẩn.
+    - So sánh giá bán trung bình giữa các khu vực.
+    - Đánh giá mức độ khác biệt là lớn hay nhỏ.
+    - Nhận xét khu vực nào ổn định giá nhất và khu vực nào biến động giá lớn nhất.
     `;
     }
 
@@ -610,6 +691,149 @@ async function chat(req, res) {
     `;
     }
 
+      else if (intent === "age_rating_analysis") {
+        const rows = await getAgeRatingStats();
+        dataForAI = `
+      Thống kê doanh thu và số vé bán theo nhóm phân loại độ tuổi:
+      ${rows.map((item, index) =>
+      `${index + 1}. ${item.rating}: ${Number(item.tickets).toLocaleString("vi-VN")} vé bán, doanh thu ${formatVND(item.revenue)}, giá bán trung bình ${formatVND(item.avg_price)}`
+      ).join("\n")}
+      Yêu cầu:
+      - Xác định nhóm phân loại độ tuổi có số vé bán và doanh thu tốt nhất.
+      - Nêu số liệu cụ thể.
+      - Nhận xét ngắn gọn ý nghĩa kinh doanh.
+      `;
+      }
+
+    else if (intent === "country_analysis") {
+      const rows = await getCountryStats();
+      dataForAI = `
+    Thống kê doanh thu theo nguồn gốc phim:
+    ${rows.map((item, index) =>
+    `${index + 1}. ${item.movie_origin}: ${Number(item.tickets).toLocaleString("vi-VN")} vé bán, doanh thu ${formatVND(item.revenue)}, giá bán trung bình ${formatVND(item.avg_price)}`
+    ).join("\n")}
+    Yêu cầu:
+    - So sánh hiệu quả giữa phim Việt Nam và phim nước ngoài.
+    - Dựa trên doanh thu, số vé bán và giá bán trung bình.
+    `;
+    }
+
+    else if (intent === "runtime_analysis") {
+      const rows = await getRuntimeStats();
+      dataForAI = `
+    Thống kê doanh thu theo nhóm thời lượng phim:
+    ${rows.map((item,index)=>
+    `${index + 1}. ${item.runtime_group}
+    - Vé bán: ${Number(item.tickets).toLocaleString("vi-VN")}
+    - Doanh thu: ${formatVND(item.revenue)}
+    - Giá bán trung bình: ${formatVND(item.avg_price)}`
+    ).join("\n\n")}
+    Yêu cầu:
+    - Đánh giá thời lượng phim có ảnh hưởng đến doanh thu trung bình hay không.
+    - So sánh các nhóm thời lượng.
+    - Xác định nhóm có doanh thu và số vé bán tốt nhất.
+    - Nêu nhận xét kinh doanh.
+    `;
+    }
+
+    else if (intent === "ticket_genre_analysis") {
+      const ticketType = detectTicketType(userMessage);
+      const rows = await getTicketGenreStats(ticketType);
+      dataForAI = `
+    Loại vé được phân tích: ${ticketType}
+    Dữ liệu theo thể loại phim:
+    ${rows.map(item =>
+    `${item.genres}
+    - ${item.ticket_type}
+    - ${Number(item.tickets).toLocaleString("vi-VN")} vé
+    - ${formatVND(item.revenue)}`
+    ).join("\n\n")}
+    Yêu cầu:
+    - Chỉ phân tích loại vé ${ticketType}.
+    - Không dùng dữ liệu của loại vé khác.
+    - Xác định nhóm phim phù hợp nhất với loại vé này.
+    `;
+    }
+
+    else if (intent === "ticket_month_analysis") {
+      const rows = await getTicketMonthStats();
+      dataForAI = `
+    Thống kê loại vé theo từng tháng:
+    ${rows.map((item) =>
+    `Tháng ${item.month_number} - ${item.ticket_type}: ${Number(item.tickets).toLocaleString("vi-VN")} vé bán, doanh thu ${formatVND(item.revenue)}, giá bán trung bình ${formatVND(item.avg_price)}`
+    ).join("\n")}
+    Yêu cầu:
+    - Xác định loại vé nào được sử dụng nhiều trong từng giai đoạn.
+    - So sánh Normal, Resell và Promotion.
+    - Nêu số liệu cụ thể theo tháng.
+    `;
+    }
+
+    else if (intent === "movie_category_analysis") {
+      const rows = await getMovieCategoryStats();
+
+      dataForAI = `
+    Thống kê hiệu quả theo nhóm phim:
+    ${rows.map((item, index) =>
+    `${index + 1}. ${item.movie_category}: ${Number(item.tickets).toLocaleString("vi-VN")} vé bán, doanh thu ${formatVND(item.revenue)}, giá bán trung bình ${formatVND(item.avg_price)}`
+    ).join("\n")}
+
+    Yêu cầu:
+    - So sánh phim Việt Nam và phim nước ngoài.
+    - Đánh giá nhóm nào tạo doanh thu hiệu quả hơn.
+    `;
+    }
+
+    else if (intent === "movie_outlier") {
+      const rows = await getMovieOutliers();
+      const outliers = rows.filter(
+        item => Math.abs(Number(item.z_score)) >= 3
+      );
+      dataForAI = `
+    Các phim có dấu hiệu ngoại lệ về doanh thu:
+    ${outliers.slice(0,10).map((item,index)=>
+    `${index+1}. ${item.movie_name}
+    - Doanh thu: ${formatVND(item.revenue)}
+    - Z-score: ${item.z_score}`
+    ).join("\n\n")}
+    Yêu cầu:
+    - Giải thích ý nghĩa của z-score.
+    - Nhận xét liệu các phim này có thể làm lệch giá trị trung bình hay không.
+    - Không suy đoán nguyên nhân nếu dữ liệu không thể hiện.
+    `;
+    }
+
+    else if (intent === "province_price_analysis") {
+      const rows = await getTopProvincesStats(10);
+      dataForAI = `
+    Giá bán trung bình theo tỉnh/thành:
+    ${rows.map((item, index) =>
+    `${index + 1}. ${item.province_name}: ${formatVND(item.avg_price)} - ${Number(item.transaction_count).toLocaleString("vi-VN")} giao dịch, doanh thu ${formatVND(item.total_revenue)}`
+    ).join("\n")}
+    Yêu cầu:
+    - So sánh giá bán trung bình giữa các tỉnh/thành.
+    - Nêu tỉnh có giá trung bình cao hơn hoặc thấp hơn.
+    - Không nói rằng không có dữ liệu nếu bảng đã có avg_price.
+    `;
+    }
+
+    else if (intent === "growth_driver_analysis") {
+      const rows = await getMonthlyGrowthStats();
+      dataForAI = `
+    Phân tích tăng trưởng doanh thu theo tháng:
+    ${rows.map(item =>
+    `Tháng ${item.month_number}
+    - Tăng trưởng doanh thu: ${Number(item.revenue_growth).toFixed(2)}%
+    - Tăng trưởng số vé: ${Number(item.ticket_growth).toFixed(2)}%
+    - Tăng trưởng giá trung bình: ${Number(item.price_growth).toFixed(2)}%`
+    ).join("\n\n")}
+    Yêu cầu:
+    - Xác định doanh thu tăng chủ yếu do số vé hay do giá bán trung bình.
+    - So sánh mức đóng góp của hai yếu tố.
+    - Nêu nhận xét kinh doanh.
+    `;
+    }
+
         else {
       const totalRows = await getTotalRows();
       dataForAI = `
@@ -642,10 +866,18 @@ async function chat(req, res) {
     Yêu cầu trả lời:
     - Trả lời hoàn toàn bằng tiếng Việt.
     - Bắt đầu bằng cụm: "Theo dữ liệu hiện có, ..."
+    - Không bịa số liệu, chỉ dùng dữ liệu được cung cấp.
+    - Nếu có số liệu, luôn nêu số liệu cụ thể.
     - Trả lời ngắn gọn, rõ ràng, tự nhiên.
+    - Luôn giải thích ý nghĩa kinh doanh của số liệu.
+    - Nếu có bảng xếp hạng, nêu ít nhất top 3 nếu dữ liệu có đủ.
+    - Nếu có sự chênh lệch giữa các nhóm, hãy tính hoặc diễn giải mức chênh lệch tương đối.
     - Mỗi ý chính xuống dòng riêng.
     - Nếu có danh sách top, trình bày dạng từng dòng hoặc đánh số.
     - Nếu là câu hỏi kinh doanh, trình bày theo 2 phần: "Nhận xét:" và "Gợi ý:".
+    - Nếu là câu hỏi kinh doanh, trình bày theo 2 phần: "Nhận xét:" và "Gợi ý:".
+    - Không trả lời quá cụt như chỉ nêu tên nhóm đứng đầu.
+    - Không khẳng định nguyên nhân nếu dữ liệu chưa chứng minh.
     - Không dùng tiếng Anh.
     - Không lặp lại cùng một ý.
     - Không dùng từ "Ví dụ" nếu không thật sự đưa ví dụ.

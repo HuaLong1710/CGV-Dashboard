@@ -510,6 +510,86 @@ async function getMarketingOpportunities(limit = 10) {
   return data;
 }
 
+async function getAgeRatingStats() {
+  const { data, error } = await supabase
+    .from("age_rating_stats")
+    .select("*")
+    .order("revenue", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+async function getCountryStats() {
+  const { data, error } = await supabase
+    .from("country_stats")
+    .select("*")
+    .order("revenue", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+async function getRuntimeStats() {
+  const { data, error } = await supabase
+    .from("runtime_stats")
+    .select("*")
+    .order("revenue", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+async function getTicketGenreStats(ticketType = null) {
+  let query = supabase
+    .from("ticket_genre_stats")
+    .select("*")
+    .order("revenue", {
+      ascending: false,
+    });
+  if (ticketType) {
+    query = query.eq(
+      "ticket_type",
+      ticketType
+    );
+  }
+  const { data, error } = await query.limit(20);
+  if (error) throw error;
+  return data;
+}
+
+async function getTicketMonthStats() {
+  const { data, error } = await supabase
+    .from("ticket_month_stats")
+    .select("*")
+    .order("month_number", { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+async function getMovieCategoryStats() {
+  const { data, error } = await supabase
+    .from("movie_category_stats")
+    .select("*")
+    .order("revenue", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+async function getMovieOutliers() {
+  const { data, error } = await supabase
+    .from("movie_outlier_stats")
+    .select("*")
+    .order("z_score", {
+      ascending: false
+    });
+
+  if (error) throw error;
+  return data;
+}
+
 module.exports = {
   getTotalRows,
   getTopByColumn,
@@ -547,4 +627,11 @@ module.exports = {
   getEarlyBookingMovies,
   getMonthlyGrowthStats,
   getMarketingOpportunities,
+  getAgeRatingStats,
+  getCountryStats,
+  getRuntimeStats,
+  getTicketGenreStats,
+  getTicketMonthStats,
+  getMovieCategoryStats,
+  getMovieOutliers,
 };
