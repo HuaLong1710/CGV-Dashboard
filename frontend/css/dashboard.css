@@ -295,6 +295,8 @@ body {
   margin-right: auto;
   background: transparent;
   color: #e5e7eb;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .bubble-input {
