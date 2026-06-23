@@ -280,3 +280,77 @@ function confirmRename() {
   closeRenameModal();
   renderRecentList();
 }
+
+function openSearchModal() {
+  document.getElementById("searchModal").style.display = "flex";
+
+  document.getElementById("searchInput").value = "";
+  document.getElementById("searchResults").innerHTML = "";
+
+  setTimeout(() => {
+    document.getElementById("searchInput").focus();
+  }, 100);
+}
+
+function handleSearchEnter(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    searchConversations();
+  }
+}
+
+function closeSearchModal() {
+  document.getElementById("searchModal").style.display = "none";
+}
+
+function openSearchResult(id) {
+  loadConversation(id);
+  closeSearchModal();
+}
+
+function searchConversations() {
+  const keyword = document.getElementById("searchInput").value.toLowerCase().trim();
+  const resultBox = document.getElementById("searchResults");
+  const conversations = JSON.parse(localStorage.getItem("cgv_conversations")) || [];
+
+  if (!keyword) {
+    resultBox.innerHTML = `
+      <div class="search-empty">Vui lòng nhập từ khóa cần tìm.</div>
+    `;
+    return;
+  }
+
+  const results = conversations.filter(item => {
+    const matchTitle = item.title?.toLowerCase().includes(keyword);
+
+    const matchContent = item.messages?.some(msg =>
+      msg.content?.toLowerCase().includes(keyword)
+    );
+
+    return matchTitle || matchContent;
+  });
+
+  if (results.length === 0) {
+    resultBox.innerHTML = `
+      <div class="search-empty">Không tìm thấy cuộc trò chuyện phù hợp.</div>
+    `;
+    return;
+  }
+
+  resultBox.innerHTML = results.map(item => {
+    const previewMessage = item.messages?.find(msg =>
+      msg.content?.toLowerCase().includes(keyword)
+    );
+
+    const preview = previewMessage
+      ? previewMessage.content.slice(0, 120) + "..."
+      : "Khớp với tên cuộc trò chuyện";
+
+    return `
+      <div class="search-result-item" onclick="openSearchResult(${item.id})">
+        <div class="search-result-title">${item.title}</div>
+        <div class="search-result-preview">${preview}</div>
+      </div>
+    `;
+  }).join("");
+}

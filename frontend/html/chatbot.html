@@ -44,9 +44,15 @@
         <span class="menu-text">Cuộc trò chuyện mới</span>
       </button>
 
-      <div class="search-item" data-title="Tìm kiếm">
+      <div class="search-item" data-title="Tìm kiếm" onclick="openSearchModal()">
         <span class="menu-icon">✦</span>
-        <span class="menu-text">Tìm kiếm trong cuộc trò chuyện</span>
+        <input
+          id="conversationSearch"
+          class="conversation-search"
+          type="text"
+          placeholder="Tìm kiếm trong cuộc trò chuyện"
+          oninput="searchConversations()"
+        />
       </div>
 
       <div class="section-title">
@@ -121,6 +127,26 @@
       <div class="delete-actions">
         <button onclick="closeDeleteModal()">Hủy</button>
         <button onclick="confirmDelete()">Xoá</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-modal" id="searchModal">
+    <div class="search-box">
+      <h2>Tìm kiếm trong cuộc trò chuyện</h2>
+
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Nhập từ khóa..."
+        onkeydown="handleSearchEnter(event)"
+      />
+
+      <div id="searchResults" class="search-results"></div>
+
+      <div class="search-actions">
+        <button onclick="searchConversations()">Tìm kiếm</button>
+        <button onclick="closeSearchModal()">Đóng</button>
       </div>
     </div>
   </div>
