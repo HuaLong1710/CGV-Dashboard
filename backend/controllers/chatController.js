@@ -886,6 +886,13 @@ async function chat(req, res) {
     - Nếu dữ liệu không đủ để kết luận, hãy nói: "Dữ liệu hiện tại chưa đủ để kết luận."
     - Không dùng LaTeX.
     - Không dùng ký hiệu \\boxed{}.
+    - Sau khi trả lời xong, đề xuất 3 câu hỏi tiếp theo liên quan đến chủ đề đang phân tích.
+    - Các câu hỏi phải ngắn gọn và hữu ích cho việc phân tích dữ liệu.
+    - Định dạng:
+    Gợi ý tiếp theo:
+    1. ...
+    2. ...
+    3. ...
     `;
 
     const botReply = await askAI(prompt);

@@ -188,7 +188,17 @@ async function sendMessage() {
   input.style.height = "auto";
   chatBox.scrollTop = chatBox.scrollHeight;
 
-  chatBox.innerHTML += `<div class="bot-message" id="loading">Bot đang trả lời...</div>`;
+  chatBox.innerHTML += `
+  <div class="bot-message" id="loading">
+    Bot đang trả lời
+    <span class="typing-dots">
+      <span></span>
+      <span></span>
+      <span></span>
+    </span>
+  </div>
+  `;
+  
   chatBox.scrollTop = chatBox.scrollHeight;
 
   try {
